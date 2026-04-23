@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  /* 배경 노이즈 텍스처 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  /* 시간 */
+  .time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 18vw, 120px);
+    color: #f0ede6;
+    letter-spacing: .04em;
+    line-height: 1;
+    /* 미세한 텍스트 그림자로 깊이감 */
+    text-shadow:
+      0 0 40px rgba(240,237,230,.08),
+      0 2px 0 rgba(0,0,0,.6);
+    /* 초 바뀔 때 살짝 스케일 */
+    transition: transform .05s ease;
+  }
+  .time.tick { transform: scale(1.004); }
+
+  /* 초 바 */
+  .seconds-bar-wrap {
+    margin: 14px auto 0;
+    width: min(280px, 80vw);
+    height: 2px;
+    background: #1e1e1e;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .seconds-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #c8a96e, #e8c98e);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* 날짜 + 요일 */
+  .date-row {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #4a4a42;
+    font-size: clamp(11px, 2.5vw, 13px);
+    font-weight: 300;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .date-row .sep {
+    width: 1px;
+    height: 10px;
+    background: #2a2a26;
+  }
+
+  .day-badge {
+    color: #c8a96e;
+  }
+
+  /* AM/PM */
+  .ampm {
+    position: absolute;
+    top: 10px;
+    right: -4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(12px, 3vw, 18px);
+    color: #c8a96e;
+    letter-spacing: .1em;
+    opacity: .8;
+  }
+
+  .time-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* 페이드인 */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .container { animation: fadeUp .6s ease both; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="time-wrap">
+    <div class="time" id="time">00:00:00</div>
+    <div class="ampm" id="ampm">AM</div>
+  </div>
+  <div class="seconds-bar-wrap">
+    <div class="seconds-bar" id="secBar" style="width:0%"></div>
+  </div>
+  <div class="date-row">
+    <span id="dateStr">0000. 00. 00</span>
+    <div class="sep"></div>
+    <span class="day-badge" id="dayStr">MON</span>
+  </div>
+</div>
+
+<script>
+  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const timeEl  = document.getElementById('time');
+  const ampmEl  = document.getElementById('ampm');
+  const secBar  = document.getElementById('secBar');
+  const dateEl  = document.getElementById('dateStr');
+  const dayEl   = document.getElementById('dayStr');
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const now = new Date();
+    const h24 = now.getHours();
+    const m   = now.getMinutes();
+    const s   = now.getSeconds();
+
+    // 12시간제
+    const h12 = h24 % 12 || 12;
+    ampmEl.textContent = h24 < 12 ? 'AM' : 'PM';
+    timeEl.textContent = `${pad(h12)}:${pad(m)}:${pad(s)}`;
+
+    // 초 바
+    secBar.style.width = (s / 59 * 100) + '%';
+
+    // 날짜
+    const y   = now.getFullYear();
+    const mo  = pad(now.getMonth() + 1);
+    const d   = pad(now.getDate());
+    dateEl.textContent = `${y}. ${mo}. ${d}`;
+    dayEl.textContent  = DAYS[now.getDay()];
+
+    // 초 바뀔 때 미세한 펄스
+    timeEl.classList.add('tick');
+    setTimeout(() => timeEl.classList.remove('tick'), 80);
+  }
+
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
